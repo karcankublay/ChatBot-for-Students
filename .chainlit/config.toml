@@ -10,7 +10,7 @@ user_env = []
 session_timeout = 3600
 
 # Enable third parties caching (e.g LangChain cache)
-cache = true
+cache = false
 
 # Authorized origins
 allow_origins = ["*"]
@@ -43,7 +43,7 @@ latex = false
 
 [UI]
 # Name of the app and chatbot.
-name = "Chatbot"
+name = "ChatMedic"
 
 # Show the readme while the thread is empty.
 show_readme_as_default = true

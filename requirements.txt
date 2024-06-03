@@ -10,6 +10,7 @@ jupyter-core
 langsmith
 tokenizers==0.15.2
 tdqm
+ppft
 #--extra-index-url https://download.pytorch.org/whl/cu118
 #torch
 #torchvision 

@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, Dict
+import os
 import chainlit as cl
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
@@ -11,20 +12,9 @@ from langchain.chains.conversation.memory import ConversationBufferMemory
 
 
 
-# ctransformers is no longer used
-""" from langchain_community.llms import CTransformers
-
-# Initialize the language model
-llm = CTransformers(model='Model/llama-2-7b-chat.ggmlv3.q2_K.bin',  # 2 bit quantized model
-                    model_type='llama',
-                    config={'max_new_tokens': 256,  # max tokens in reply
-                            'temperature': 0.01, }  # randomness of the reply
-                    )
- """
-
 # Initialize the language model with LlamaCpp
 llm = LlamaCpp(model_path="Model/llama-2-7b-chat.Q4_K_M.gguf",  #  token streaming to terminal
-               device="cuda",n_gpu_layers=-1,verbose = True, max_tokens = 4096,  #offloads ALL layers to GPU, uses around 6 GB of Vram
+               device="cpu",verbose = True, max_tokens = 2048,  #offloads ALL layers to GPU, uses around 6 GB of Vram
                config={  # max tokens in reply
                        'temperature': 0.75}  # randomness of the reply
                )
@@ -33,7 +23,7 @@ DATA_PATH = 'Data/'
 
 DB_CHROMA_PATH = 'vectorstore/db_chroma'
 
-embedding_function = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cuda'})
+embedding_function = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cpu'})
 
 db = Chroma(persist_directory=DB_CHROMA_PATH, embedding_function=embedding_function)
 
@@ -138,16 +128,21 @@ def on_chat_end():
     pass 
 
 
+provider_id = os.getenv('OAUTH_GOOGLE_CLIENT_ID')
+token = os.getenv('OAUTH_GOOGLE_CLIENT_SECRET')
+@cl.oauth_callback
+def oauth_callback(
+    provider_id: str,
+    token: str,
+    raw_user_data: Dict[str, str],
+    default_user: cl.User,
+) -> Optional[cl.User]:
 
-@cl.password_auth_callback
-def auth_callback(username: str, password: str):
-    # Fetch the user matching username from your database
-    # and compare the hashed password with the value stored in the database
-    if (username, password) == ("karcan", "karcan123"):
-        return cl.User(
-            identifier="admin", metadata={"role": "admin", "provider": "credentials"}
-        )
-    else:
-        return None
+    
+    # Allow any Gmail user to authenticate
+    if provider_id == "google":
+        email = raw_user_data.get("email", "")
+        if email.endswith("@gmail.com"):
+            return default_user
 
-
+    return None 
